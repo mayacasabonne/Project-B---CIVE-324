@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Montréal Cycling Infrastructure Investment Optimizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #002060;
+    --red: #C00000;
+    --yellow: #FFFF00;
+    --green-row: #E2EFDA;
+    --gray-row: #F2F2F2;
+    --white: #FFFFFF;
+    --black: #000000;
+    --border: #BFBFBF;
+    --light-border: #D9D9D9;
+    --font: 'Barlow Condensed', sans-serif;
+    --font-body: 'Barlow', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    font-size: 13px;
+    background: #1a1a2e;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 16px;
+  }
+
+
+
+  /* ── Dashboard ── */
+  #dashboard-screen { display: block; width: 100%; max-width: 1100px; }
+
+  /* Title bar */
+  .title-bar {
+    background: var(--red);
+    padding: 14px 20px;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .title-bar h1 {
+    font-family: var(--font);
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 0.3px;
+  }
+
+  /* Main grid – two columns */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    background: white;
+    border: 1px solid var(--border);
+    border-top: none;
+  }
+
+  .main-grid > .panel {
+    border-right: 1px solid var(--border);
+  }
+  .main-grid > .panel:last-child {
+    border-right: none;
+  }
+
+  /* Full-width sections */
+  .full-section {
+    background: white;
+    border: 1px solid var(--border);
+    border-top: none;
+  }
+
+  /* Section headers */
+  .sec-header {
+    background: var(--navy);
+    color: white;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 7px 12px;
+    letter-spacing: 0.2px;
+  }
+
+  .sec-header.red { background: var(--red); }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font);
+    font-size: 12.5px;
+  }
+
+  th {
+    background: white;
+    font-weight: 700;
+    text-align: left;
+    padding: 5px 10px;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--light-border);
+    color: var(--black);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 4px 10px;
+    border-bottom: 1px solid var(--light-border);
+    border-right: 1px solid var(--light-border);
+    color: var(--black);
+    white-space: nowrap;
+  }
+
+  td:last-child, th:last-child { border-right: none; }
+
+  tr.row-high td { background: var(--green-row); }
+  tr.row-med td { background: #FFF2CC; }
+  tr.row-low td { background: #FCE4D6; }
+  tr.row-nonconf td { background: #FFE0E0; }
+  tr.row-total td { background: var(--gray-row); font-weight: 700; }
+  tr.row-ci td { background: var(--gray-row); }
+  tr.row-gray td { background: var(--gray-row); }
+
+  /* Status badges */
+  .badge {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 3px;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .badge-met { background: #E2EFDA; color: #375623; }
+  .badge-unmet { background: #FFE0E0; color: #9B0000; }
+  .badge-exceed { background: #FFF2CC; color: #7D6608; }
+
+  /* Comfort Index display */
+  .ci-bar-wrap {
+    padding: 4px 10px;
+    background: var(--gray-row);
+  }
+  .ci-track {
+    height: 14px;
+    background: #ddd;
+    border-radius: 7px;
+    overflow: hidden;
+  }
+  .ci-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #002060, #C00000);
+    border-radius: 7px;
+    transition: width 0.5s ease;
+  }
+  .ci-label {
+    font-family: var(--font);
+    font-size: 11.5px;
+    color: #444;
+    margin-top: 3px;
+  }
+
+  /* Controls panel */
+  .control-row {
+    display: flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-bottom: 1px solid var(--light-border);
+    gap: 8px;
+  }
+
+  .control-label {
+    flex: 1;
+    font-family: var(--font);
+    font-size: 12.5px;
+    color: #222;
+  }
+
+  .control-note {
+    font-size: 11px;
+    color: #777;
+    font-style: italic;
+  }
+
+  .ctrl-input {
+    width: 110px;
+    padding: 3px 6px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: var(--font);
+    font-size: 12.5px;
+    text-align: right;
+    background: var(--yellow);
+    font-weight: 700;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .ctrl-input:focus { border-color: var(--navy); }
+
+  .ctrl-input.white-bg {
+    background: white;
+    font-weight: 400;
+  }
+
+  .ctrl-readonly {
+    width: 110px;
+    padding: 3px 6px;
+    border: 1px solid var(--light-border);
+    border-radius: 3px;
+    font-family: var(--font);
+    font-size: 12.5px;
+    text-align: right;
+    background: var(--gray-row);
+    color: #333;
+  }
+
+  /* Run button */
+  .run-btn {
+    display: block;
+    width: calc(100% - 24px);
+    margin: 10px 12px;
+    padding: 9px;
+    background: var(--navy);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: opacity 0.2s;
+  }
+  .run-btn:hover { opacity: 0.88; }
+
+  /* Objective function */
+  .obj-row {
+    display: flex;
+    align-items: center;
+    padding: 7px 12px;
+    background: var(--gray-row);
+    border-top: 2px solid var(--border);
+  }
+  .obj-formula {
+    flex: 1;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .obj-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--red);
+    min-width: 70px;
+    text-align: right;
+  }
+  .obj-note {
+    font-size: 11px;
+    color: #666;
+    margin-left: 10px;
+    font-style: italic;
+  }
+
+  /* Scenario table */
+  .scenario-label {
+    font-size: 10.5px;
+    color: #888;
+    padding: 3px 10px 1px;
+    font-style: italic;
+    border-bottom: 1px solid var(--light-border);
+  }
+
+  tr.row-active-scenario td {
+    background: #EBF3FB;
+  }
+
+  .scen-btn {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 3px;
+    border: 1px solid var(--navy);
+    background: transparent;
+    color: var(--navy);
+    font-family: var(--font);
+    font-size: 11.5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.15s;
+    margin: 2px;
+  }
+  .scen-btn:hover, .scen-btn.active { background: var(--navy); color: white; }
+
+  .scen-buttons {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--light-border);
+  }
+
+  /* mini summary panel (top right) */
+  .summary-panel {
+    padding: 8px 12px;
+    background: white;
+  }
+
+  .summ-table td { font-size: 12px; }
+
+  .instructions {
+    background: #FFF8E1;
+    border: 1px solid #FFD54F;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin: 10px 12px;
+    font-family: var(--font-body);
+    font-size: 11.5px;
+    color: #555;
+    line-height: 1.5;
+  }
+
+  .col-2-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .mini-stat {
+    text-align: center;
+    padding: 10px 8px;
+    border-right: 1px solid var(--light-border);
+  }
+  .mini-stat:last-child { border-right: none; }
+  .mini-stat .val {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .mini-stat .lbl {
+    font-size: 10.5px;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  @media (max-width: 700px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .main-grid > .panel { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ DASHBOARD ═══════════════ -->
+<div id="dashboard-screen">
+
+  <!-- Title -->
+  <div class="title-bar">
+    <h1 id="dash-title">Montréal Cycling Infrastructure Investment Optimizer</h1>
+  </div>
+
+  <!-- Top two-panel row: Descriptive + Controls -->
+  <div class="main-grid">
+    <!-- LEFT: Descriptive -->
+    <div class="panel">
+      <div class="sec-header" id="sec1-title">1. DESCRIPTIVE — BASELINE NETWORK</div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Comfort category</th>
+            <th>km</th>
+            <th>Proportion</th>
+            <th>CI weight</th>
+            <th>Conforming?</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="baseline-tbody">
+          <tr class="row-high">
+            <td>High comfort</td><td>360</td><td>34.92%</td><td>1.0</td><td>Yes</td><td>Conforming</td>
+          </tr>
+          <tr class="row-med">
+            <td>Medium comfort</td><td>0</td><td>0.00%</td><td>0.5</td><td>Yes</td><td>Conforming</td>
+          </tr>
+          <tr class="row-low">
+            <td>Low comfort</td><td>290</td><td>28.13%</td><td>0.1</td><td>Yes</td><td>Conforming</td>
+          </tr>
+          <tr class="row-nonconf">
+            <td>Non-conforming</td><td>381</td><td>36.95%</td><td>0.0</td><td>No</td><td>Non-conforming</td>
+          </tr>
+          <tr class="row-total">
+            <td><strong>TOTAL</strong></td><td id="bl-total">1031</td><td>100%</td><td></td><td></td><td></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="ci-bar-wrap">
+        <div class="ci-track"><div class="ci-fill" id="ci-fill" style="width:37.73%"></div></div>
+        <div class="ci-label">Comfort Index: <strong id="ci-value">37.73</strong> / 100 max &nbsp;·&nbsp; <em id="ci-note">predominantly low-comfort network</em></div>
+      </div>
+
+      <!-- Mini stat strip -->
+      <div class="col-2-grid" style="border-top:1px solid var(--light-border)">
+        <div class="mini-stat">
+          <div class="val" id="stat-high">360</div>
+          <div class="lbl">High comfort km</div>
+        </div>
+        <div class="mini-stat">
+          <div class="val" id="stat-nonconf">381</div>
+          <div class="lbl">Non-conforming km</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Controls -->
+    <div class="panel">
+      <div class="sec-header" id="sec2-title">2. INVESTMENT CONTROLS</div>
+
+      <div class="control-row">
+        <span class="control-label">Budget (total capital, $)</span>
+        <input class="ctrl-input" id="ctrl-budget" type="number" value="100000000" step="1000000" onchange="recalculate()">
+      </div>
+      <div class="control-row">
+        <div style="flex:1">
+          <div class="control-label">x1 — Low → High (km)</div>
+          <div class="control-note">≤ 290 km &nbsp;|&nbsp; Cost: $500k/km</div>
+        </div>
+        <input class="ctrl-input white-bg" id="ctrl-x1" type="number" value="0" min="0" max="290" onchange="recalculate()">
+      </div>
+      <div class="control-row">
+        <div style="flex:1">
+          <div class="control-label">x2 — Low → Medium (km)</div>
+          <div class="control-note">≤ 290 km &nbsp;|&nbsp; Cost: $200k/km</div>
+        </div>
+        <input class="ctrl-input white-bg" id="ctrl-x2" type="number" value="0" min="0" max="290" onchange="recalculate()">
+      </div>
+      <div class="control-row">
+        <div style="flex:1">
+          <div class="control-label">x3 — Non-conf → Conf (km)</div>
+          <div class="control-note">≤ 381 km &nbsp;|&nbsp; Cost: $150k/km</div>
+        </div>
+        <input class="ctrl-input white-bg" id="ctrl-x3" type="number" value="0" min="0" max="381" onchange="recalculate()">
+      </div>
+
+      <div class="control-row" style="background: var(--gray-row);">
+        <span class="control-label" style="font-weight:700">Total investment cost</span>
+        <span class="ctrl-readonly" id="total-cost">$0</span>
+      </div>
+      <div class="control-row" style="background: var(--gray-row);">
+        <span class="control-label" style="font-weight:700">Budget utilisation</span>
+        <span class="ctrl-readonly" id="budget-util">0%</span>
+      </div>
+
+      <!-- Scenario quick-load -->
+      <div class="scen-buttons">
+        <strong style="font-size:11.5px;color:#444;">Quick-load scenario:</strong><br>
+        <button class="scen-btn" onclick="loadScenario('low')">Low — $50M</button>
+        <button class="scen-btn" onclick="loadScenario('medium')">Medium — $100M</button>
+        <button class="scen-btn" onclick="loadScenario('high')">High — $150M</button>
+      </div>
+
+      <div class="instructions">
+        <strong>Instructions:</strong> Enter budget and upgrade quantities (x1, x2, x3), or click a scenario above to pre-load solver values. Sections 3 and 4 update automatically.
+      </div>
+    </div>
+  </div>
+
+  <!-- Predictive section -->
+  <div class="full-section">
+    <div class="sec-header" id="sec3-title">3. PREDICTIVE — POST-UPGRADE NETWORK PROJECTIONS</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Baseline (km)</th>
+          <th>Post-upgrade (km)</th>
+          <th>Change (km)</th>
+          <th>Target (km)</th>
+          <th>vs. Target</th>
+          <th>Decision variable</th>
+          <th>km upgraded</th>
+          <th>Cost allocated ($)</th>
+        </tr>
+      </thead>
+      <tbody id="pred-tbody">
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Prescriptive section -->
+  <div class="full-section">
+    <div class="sec-header" id="sec4-title">4. PRESCRIPTIVE — POLICY GOAL ACHIEVEMENT &nbsp;(Preemptive Goal Programming)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Goal</th>
+          <th>Current (km)</th>
+          <th>Target (km)</th>
+          <th>Deviation</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Deviational var.</th>
+          <th>Value (km)</th>
+          <th>Role in objective</th>
+        </tr>
+      </thead>
+      <tbody id="presc-tbody"></tbody>
+    </table>
+    <div class="obj-row">
+      <span class="obj-formula">Objective: &nbsp;&nbsp;Min Z = P1·d1⁻ + P2·d2⁺ + P3·d3⁺ =</span>
+      <span class="obj-value" id="obj-z">461</span>
+      <span class="obj-note">← Zero means all goals are met.</span>
+    </div>
+  </div>
+
+  <!-- Scenario reference -->
+  <div class="full-section">
+    <div class="sec-header red" id="sec5-title">5. SCENARIO REFERENCE &nbsp;(pre-computed Solver solutions)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Low — $50M</th>
+          <th>Medium — $100M</th>
+          <th>High — $150M</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>x1 / x2 / x3 (km)</td><td>100 / 0 / 0</td><td>140 / 0 / 200</td><td>140 / 90 / 381</td></tr>
+        <tr class="row-high"><td>High comfort post-upgrade</td><td>460</td><td>500</td><td>500</td></tr>
+        <tr class="row-low"><td>Low comfort post-upgrade</td><td>190</td><td>150</td><td>60</td></tr>
+        <tr class="row-nonconf"><td>Non-conforming post-upgrade</td><td>381</td><td>181</td><td>0</td></tr>
+        <tr class="row-total"><td>Total investment</td><td>$50M</td><td>$100M</td><td>$149.7M</td></tr>
+        <tr>
+          <td>All goals met?</td>
+          <td><span class="badge badge-unmet">No</span></td>
+          <td><span class="badge badge-met">Yes</span></td>
+          <td><span class="badge badge-met">Yes (exceeded)</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+// ─── Baseline data ───────────────────────────────────
+const BASE = {
+  high: 360, medium: 0, low: 290, nonconf: 381,
+  total: 1031, ci: 37.73,
+  targets: { high: 500, low: 150, nonconf: 200 },
+  costs: { x1: 500000, x2: 200000, x3: 150000 }
+};
+
+// ─── Render baseline table ────────────────────────────
+function updateBaselineTable() {
+  const total = BASE.high + BASE.medium + BASE.low + BASE.nonconf;
+  const ci = BASE.ci;
+
+  const rows = [
+    ['High comfort',   BASE.high,    'row-high',    1.0, 'Yes', 'Conforming'],
+    ['Medium comfort', BASE.medium,  'row-med',     0.5, 'Yes', 'Conforming'],
+    ['Low comfort',    BASE.low,     'row-low',     0.1, 'Yes', 'Conforming'],
+    ['Non-conforming', BASE.nonconf, 'row-nonconf', 0.0, 'No',  'Non-conforming'],
+  ];
+
+  const tbody = document.getElementById('baseline-tbody');
+  tbody.innerHTML = rows.map(([name, km, cls, w, conf, status]) => {
+    const prop = total > 0 ? (km/total*100).toFixed(2)+'%' : '0%';
+    return `<tr class="${cls}">
+      <td>${name}</td><td>${km.toFixed(0)}</td><td>${prop}</td>
+      <td>${w}</td><td>${conf}</td><td>${status}</td>
+    </tr>`;
+  }).join('');
+
+  tbody.innerHTML += `<tr class="row-total">
+    <td><strong>TOTAL</strong></td><td>${total}</td><td>100%</td><td></td><td></td><td></td>
+  </tr>`;
+
+  document.getElementById('ci-value').textContent = ci.toFixed(2);
+  document.getElementById('ci-fill').style.width = Math.min(ci, 100) + '%';
+  document.getElementById('stat-high').textContent = BASE.high;
+  document.getElementById('stat-nonconf').textContent = BASE.nonconf;
+}
+
+// ─── Scenario loader ──────────────────────────────────
+const SCENARIOS = {
+  low:    { budget: 50000000,  x1: 100, x2: 0,  x3: 0   },
+  medium: { budget: 100000000, x1: 140, x2: 0,  x3: 200 },
+  high:   { budget: 150000000, x1: 140, x2: 90, x3: 381 },
+};
+
+function loadScenario(key) {
+  const s = SCENARIOS[key];
+  document.getElementById('ctrl-budget').value = s.budget;
+  document.getElementById('ctrl-x1').value = s.x1;
+  document.getElementById('ctrl-x2').value = s.x2;
+  document.getElementById('ctrl-x3').value = s.x3;
+  document.querySelectorAll('.scen-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  recalculate();
+}
+
+// ─── Core recalculation ───────────────────────────────
+function recalculate() {
+  const budget = parseFloat(document.getElementById('ctrl-budget').value) || 0;
+  const x1 = Math.min(parseFloat(document.getElementById('ctrl-x1').value) || 0, 290);
+  const x2 = Math.min(parseFloat(document.getElementById('ctrl-x2').value) || 0, 290 - x1);
+  const x3 = Math.min(parseFloat(document.getElementById('ctrl-x3').value) || 0, 381);
+
+  const cost = x1 * BASE.costs.x1 + x2 * BASE.costs.x2 + x3 * BASE.costs.x3;
+  const util = budget > 0 ? (cost/budget*100).toFixed(1)+'%' : '0%';
+
+  document.getElementById('total-cost').textContent = '$' + (cost/1e6).toFixed(2) + 'M';
+  document.getElementById('budget-util').textContent = util;
+
+  // Post-upgrade values
+  const postHigh    = BASE.high + x1;
+  const postMedium  = BASE.medium + x2;
+  const postLow     = BASE.low - x1 - x2;
+  const postNonconf = BASE.nonconf - x3;
+  const postConf    = (BASE.high + BASE.medium + BASE.low) + x3;
+
+  // ── Predictive table ──────────────────────────────
+  const predRows = [
+    ['High comfort',   BASE.high,    postHigh,    postHigh - BASE.high,    BASE.targets.high,    'x1 - Low → High',  x1, x1 * BASE.costs.x1],
+    ['Medium comfort', BASE.medium,  postMedium,  postMedium - BASE.medium,'—',                  'x2 - Low → Med',   x2, x2 * BASE.costs.x2],
+    ['Low comfort',    BASE.low,     postLow,     postLow - BASE.low,      BASE.targets.low,     null, null, null],
+    ['Non-conforming', BASE.nonconf, postNonconf, postNonconf - BASE.nonconf, BASE.targets.nonconf, 'x3 - Non-conf → Conf', x3, x3 * BASE.costs.x3],
+    ['Conforming',     BASE.high + BASE.medium + BASE.low, postConf, postConf - (BASE.high + BASE.medium + BASE.low), '—', null, null, null],
+    ['TOTAL',          BASE.total,   BASE.total,  0,                        null, null, null, null],
+  ];
+
+  const tgt = BASE.targets;
+
+  document.getElementById('pred-tbody').innerHTML = predRows.map(([name, bl, post, chg, tgt_v, dvar, km, costV], i) => {
+    let vs = '—';
+    if (tgt_v !== '—' && tgt_v != null) {
+      if (name === 'High comfort')   vs = post >= tgt_v ? '<span class="badge badge-met">Meets target</span>' : '<span class="badge badge-unmet">Below target</span>';
+      if (name === 'Low comfort')    vs = post <= tgt_v ? '<span class="badge badge-met">Meets limit</span>' : '<span class="badge badge-exceed">Exceeds limit</span>';
+      if (name === 'Non-conforming') vs = post <= tgt_v ? '<span class="badge badge-met">Meets limit</span>' : '<span class="badge badge-exceed">Exceeds limit</span>';
+    }
+    const cls = name === 'TOTAL' ? 'row-total' : i % 2 === 0 ? '' : 'row-gray';
+    const chgStr = chg >= 0 ? '+'+chg.toFixed(0) : chg.toFixed(0);
+    const tgtStr = (tgt_v == null || tgt_v === '—') ? '—' : tgt_v;
+    const dvarStr = dvar ? dvar : '';
+    const kmStr   = km != null ? km.toFixed(0) : '';
+    const costStr = costV != null ? '$' + (costV/1e6).toFixed(2) + 'M' : '';
+    return `<tr class="${cls}">
+      <td>${name}</td><td>${bl}</td><td>${post.toFixed(0)}</td>
+      <td>${chgStr}</td><td>${tgtStr}</td><td>${vs}</td>
+      <td>${dvarStr}</td><td>${kmStr}</td><td>${costStr}</td>
+    </tr>`;
+  }).join('');
+
+  // ── Prescriptive table ────────────────────────────
+  const d1m = Math.max(0, tgt.high - postHigh);         // d1⁻ underachievement
+  const d2p = Math.max(0, postLow - tgt.low);           // d2⁺ overachievement
+  const d3p = Math.max(0, postNonconf - tgt.nonconf);   // d3⁺ overachievement
+  const Z = d1m + d2p + d3p;
+
+  const goalRows = [
+    {
+      goal: 'G1: High comfort ≥ ' + tgt.high + ' km',
+      current: postHigh, target: tgt.high,
+      dev: postHigh - tgt.high, priority: 'P1',
+      met: postHigh >= tgt.high,
+      dvar: 'd1⁻', dval: d1m, role: d1m > 0 ? 'Penalized: goal unmet' : 'Goal met'
+    },
+    {
+      goal: 'G2: Low comfort ≤ ' + tgt.low + ' km',
+      current: postLow, target: tgt.low,
+      dev: postLow - tgt.low, priority: 'P2',
+      met: postLow <= tgt.low,
+      dvar: 'd2⁺', dval: d2p, role: d2p > 0 ? 'Penalized: limit exceeded' : 'Within limit'
+    },
+    {
+      goal: 'G3: Non-conf ≤ ' + tgt.nonconf + ' km',
+      current: postNonconf, target: tgt.nonconf,
+      dev: postNonconf - tgt.nonconf, priority: 'P3',
+      met: postNonconf <= tgt.nonconf,
+      dvar: 'd3⁺', dval: d3p, role: d3p > 0 ? 'Penalized: limit exceeded' : 'Within limit'
+    },
+  ];
+
+  document.getElementById('presc-tbody').innerHTML = goalRows.map(g => {
+    const devStr = g.dev >= 0 ? '+'+g.dev.toFixed(0) : g.dev.toFixed(0);
+    const statusBadge = g.met
+      ? '<span class="badge badge-met">Met</span>'
+      : '<span class="badge badge-unmet">Not met</span>';
+    return `<tr class="row-gray">
+      <td>${g.goal}</td>
+      <td>${g.current.toFixed(0)}</td>
+      <td>${g.target}</td>
+      <td>${devStr}</td>
+      <td>${g.priority}</td>
+      <td>${statusBadge}</td>
+      <td>${g.dvar}</td>
+      <td>${g.dval.toFixed(0)}</td>
+      <td style="font-style:italic;color:#555">${g.role}</td>
+    </tr>`;
+  }).join('');
+
+  const zColor = Z === 0 ? '#375623' : (Z < 200 ? '#7D6608' : '#9B0000');
+  document.getElementById('obj-z').textContent = Z.toFixed(0);
+  document.getElementById('obj-z').style.color = zColor;
+}
+
+// ─── On load: render immediately ─────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  updateBaselineTable();
+  recalculate();
+});
+</script>
+</body>
+</html>
